@@ -8,13 +8,11 @@ dotenv.config();
 const port = process.env.PORT || 8888;
 
 const app = express();
+await connectToDatabase();
 
 app.use(express.json());
 app.use(cookieParser());
 
 app.use("/", authRouter);
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-  connectToDatabase();
-});
+module.exports = app;

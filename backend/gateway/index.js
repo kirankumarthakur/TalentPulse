@@ -39,6 +39,4 @@ app.use(
 );
 app.get("/api/me", authMiddleware, getCurrentUser);
 
-app.listen(port, () => {
-  console.log(`Gateway server is running on port ${port}`);
-});
+module.exports = app;

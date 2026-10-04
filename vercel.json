@@ -1,0 +1,75 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "gateway": {
+      "root": "backend/gateway",
+      "framework": "express",
+      "bindings": [
+        {
+          "type": "service",
+          "service": "authservice",
+          "format": "url",
+          "env": "URL_AUTH"
+        },
+        {
+          "type": "service",
+          "service": "resumeservice",
+          "format": "url",
+          "env": "URL_RESUME"
+        },
+        {
+          "type": "service",
+          "service": "interviewservice",
+          "format": "url",
+          "env": "URL_INTERVIEW"
+        },
+        {
+          "type": "service",
+          "service": "billingservice",
+          "format": "url",
+          "env": "URL_BILLING"
+        }
+      ]
+    },
+
+    "authservice": {
+      "root": "backend/services/authService",
+      "framework": "express"
+    },
+
+    "billingservice": {
+      "root": "backend/services/billingService",
+      "framework": "express"
+    },
+
+    "interviewservice": {
+      "root": "backend/services/interviewService",
+      "framework": "express"
+    },
+
+    "resumeservice": {
+      "root": "backend/services/resumeService",
+      "framework": "express"
+    },
+
+    "frontend": {
+      "root": "frontend",
+      "framework": "vite"
+    }
+  },
+
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": {
+        "service": "gateway"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
+    }
+  ]
+}
