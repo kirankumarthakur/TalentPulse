@@ -148,3 +148,4 @@ vite.config.ts.timestamp-*
 # Turbo Repo
 .turbo
 backend/services/authService/serviceAccountKey.json
+*.mp4

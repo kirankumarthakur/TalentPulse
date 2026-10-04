@@ -1,8 +1,7 @@
 import React, { useEffect } from "react";
 import { FiArrowUpRight, FiX } from "react-icons/fi";
 import { FcGoogle } from "react-icons/fc";
-import { auth, provider } from "../utils/firebase";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithGoogle } from "../utils/firebase";
 import api from "../utils/axios";
 
 const LoginModal = ({ onClose, setUser }) => {
@@ -17,13 +16,12 @@ const LoginModal = ({ onClose, setUser }) => {
 
   const handleGoogleSignIn = async () => {
     try {
-      const result = await signInWithPopup(auth, provider);
-      const token = await result.user.getIdToken();
+      const { photoURL, token } = await signInWithGoogle();
 
       const response = await api.post("/api/auth/login", { token });
       setUser({
         ...response?.data?.user,
-        photoURL: result.user.photoURL,
+        photoURL,
       });
       onClose();
     } catch (error) {

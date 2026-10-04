@@ -1,0 +1,7 @@
+.dockerignore
+**/node_modules
+.env
+**/.env
+Dockerfile
+**/Dockerfile
+**/serviceAccountKey.json

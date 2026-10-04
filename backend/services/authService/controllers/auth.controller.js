@@ -35,7 +35,7 @@ export const GoogleAuthController = async (req, res) => {
     res.cookie("session", sessionId, {
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
+      sameSite: "none",
       maxAge: sessionTtlSeconds * 1000,
     });
 
@@ -57,7 +57,7 @@ export const LogoutController = async (req, res) => {
     res.clearCookie("session", {
       httpOnly: true,
       secure: true,
-      sameSite: "strict",
+      sameSite: "none",
     });
     return res
       .status(200)
@@ -65,5 +65,132 @@ export const LogoutController = async (req, res) => {
   } catch (error) {
     console.error("Error in LogoutController:", error);
     res.status(500).json({ message: "Logout Service error" });
+  }
+};
+
+export const useCredits = async (req, res) => {
+  try {
+    const sessionId = req.cookies?.session;
+    if (!sessionId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No session cookie" });
+    }
+    const session = await redisClient.get(`session:${sessionId}`);
+    const sessionData = JSON.parse(session);
+    const { credits, action } = req.body;
+
+    if (!credits) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Bad Request: No credits specified" });
+    }
+
+    if (credits <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Bad Request: Credits must be positive",
+      });
+    }
+
+    const user = await User.findById(sessionData.userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    if (user.credits < credits) {
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient credits",
+        credits: user.credits,
+      });
+    }
+
+    user.credits -= credits;
+    await user.save();
+
+    const randomttl = 24 * 60 * 60 + Math.floor(Math.random() * 60 * 60);
+
+    await redisClient.setex(
+      `session:${sessionId}`,
+      randomttl,
+      JSON.stringify({
+        userId: user._id,
+        email: user.email,
+        username: user.username,
+        credits: user.credits,
+      }),
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully used ${credits} credits for ${action}`,
+      action: action,
+      credits: user.credits,
+    });
+  } catch (error) {
+    console.error("Error in useCredits:", error);
+    res.status(500).json({ message: "Use Credits Service error" });
+  }
+};
+
+export const addCredits = async (req, res) => {
+  try {
+    const sessionId = req.cookies?.session;
+    if (!sessionId) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No session cookie" });
+    }
+    const session = await redisClient.get(`session:${sessionId}`);
+    const sessionData = JSON.parse(session);
+    const { credits } = req.body;
+
+    if (!credits) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Bad Request: No credits specified" });
+    }
+
+    if (credits <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Bad Request: Credits must be positive",
+      });
+    }
+
+    const user = await User.findById(sessionData.userId);
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    user.credits += credits;
+    await user.save();
+
+    const randomttl = 24 * 60 * 60 + Math.floor(Math.random() * 60 * 60);
+
+    await redisClient.setex(
+      `session:${sessionId}`,
+      randomttl,
+      JSON.stringify({
+        userId: user._id,
+        email: user.email,
+        username: user.username,
+        credits: user.credits,
+      }),
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Successfully added ${credits} credits`,
+      credits: user.credits,
+    });
+  } catch (error) {
+    console.error("Error in addCredits:", error);
+    res.status(500).json({ message: "Add Credits Service error" });
   }
 };

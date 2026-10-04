@@ -5,10 +5,22 @@ import Dashboard from "./pages/Dashboard";
 import { useState } from "react";
 import { useEffect } from "react";
 import { getCurrentUser } from "./services/user.api";
+import { getResume } from "./services/resume.api";
+import ResumeScore from "./pages/ResumeScore";
+import ProtectedLayout from "./layouts/ProtectedLayout";
+import BuildResume from "./pages/BuildResume";
+import { useDispatch } from "react-redux";
+import { setResume } from "./redux/resumeSlice.js";
+import { observeAuthState } from "./utils/firebase";
+import Interview from "./pages/Interview";
+import ReportPage from "./components/interview/ReportPage";
+import InterviewHistory from "./pages/InterviewHistory";
+import Billing from "./pages/Billing";
 
 const App = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     let isMounted = true;
@@ -16,10 +28,15 @@ const App = () => {
     const minimumLoadingTime = 400;
     const startedAt = Date.now();
 
-    const fetchCurrentUser = async () => {
+    const fetchCurrentUser = async (firebaseUser) => {
       try {
         const userData = await getCurrentUser();
-        if (isMounted) setUser(userData?.user);
+        if (isMounted && userData?.user) {
+          setUser({
+            ...userData.user,
+            photoURL: firebaseUser?.photoURL || "",
+          });
+        }
       } finally {
         const remainingTime = Math.max(
           0,
@@ -32,12 +49,31 @@ const App = () => {
       }
     };
 
-    fetchCurrentUser();
+    const unsubscribe = observeAuthState((firebaseUser) => {
+      if (firebaseUser) {
+        fetchCurrentUser(firebaseUser);
+      } else if (isMounted) {
+        setUser(null);
+        setLoading(false);
+      }
+    });
 
     return () => {
       isMounted = false;
       clearTimeout(loadingTimer);
+      unsubscribe();
     };
+  }, []);
+
+  useEffect(() => {
+    const fetchResume = async () => {
+      const result = await getResume();
+      if (result) {
+        dispatch(setResume(result.data));
+      }
+    };
+
+    fetchResume();
   }, []);
 
   if (loading) {
@@ -90,15 +126,37 @@ const App = () => {
           }
         />
         <Route
-          path="/dashboard/*"
           element={
             user ? (
-              <Dashboard user={user} setUser={setUser} />
+              <ProtectedLayout user={user} setUser={setUser} />
             ) : (
               <Navigate to="/" replace />
             )
           }
-        />
+        >
+          <Route path="/dashboard" element={<Dashboard user={user} />} />
+          <Route path="/dashboard/interviews" element={<InterviewHistory />} />
+          <Route
+            path="/dashboard/resume/build"
+            element={<BuildResume user={user} setUser={setUser} />}
+          />
+          <Route
+            path="/dashboard/resume/score"
+            element={<ResumeScore user={user} setUser={setUser} />}
+          />
+          <Route
+            path="/dashboard/interview/:id"
+            element={<Interview user={user} setUser={setUser} />}
+          />
+          <Route
+            path="/dashboard/interview/:id/report"
+            element={<ReportPage user={user} setUser={setUser} />}
+          />
+          <Route
+            path="/dashboard/billing"
+            element={<Billing user={user} setUser={setUser} />}
+          />
+        </Route>
       </Routes>
     </>
   );
