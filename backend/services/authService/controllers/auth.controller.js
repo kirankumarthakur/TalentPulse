@@ -3,6 +3,8 @@ import { getAuth } from "firebase-admin/auth";
 import User from "../models/auth.model.js";
 import redisClient from "../configs/redisConfig.js";
 
+const getSessionTtl = () => 3600 + Math.floor(Math.random() * 600); // 1 hour + 0-10 min jitter
+
 export const GoogleAuthController = async (req, res) => {
   try {
     const { token } = req.body;
@@ -19,8 +21,7 @@ export const GoogleAuthController = async (req, res) => {
     }
 
     const sessionId = crypto.randomUUID();
-    const sessionTtlSeconds =
-      24 * 60 * 60 + Math.floor(Math.random() * 60 * 60);
+    const sessionTtlSeconds = getSessionTtl();
     await redisClient.setex(
       `session:${sessionId}`,
       sessionTtlSeconds,
@@ -111,11 +112,11 @@ export const useCredits = async (req, res) => {
     user.credits -= credits;
     await user.save();
 
-    const randomttl = 24 * 60 * 60 + Math.floor(Math.random() * 60 * 60);
+    const sessionTtl = getSessionTtl();
 
     await redisClient.setex(
       `session:${sessionId}`,
-      randomttl,
+      sessionTtl,
       JSON.stringify({
         userId: user._id,
         email: user.email,
@@ -171,11 +172,11 @@ export const addCredits = async (req, res) => {
     user.credits += credits;
     await user.save();
 
-    const randomttl = 24 * 60 * 60 + Math.floor(Math.random() * 60 * 60);
+    const sessionTtl = getSessionTtl();
 
     await redisClient.setex(
       `session:${sessionId}`,
-      randomttl,
+      sessionTtl,
       JSON.stringify({
         userId: user._id,
         email: user.email,

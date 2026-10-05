@@ -2,7 +2,8 @@ import redisClient from "../configs/redisConfig.js";
 import { resumeAgent } from "../agents/resume.agent.js";
 import extractTextFromPDF from "../configs/pdfConfig.js";
 import Resume from "../models/resume.model.js";
-import fs from "fs";
+
+const getCacheTtl = () => 3600 + Math.floor(Math.random() * 600); // 1 hour + 0-10 min jitter
 
 export const uploadResume = async (req, res) => {
   const file = req.file;
@@ -19,7 +20,7 @@ export const uploadResume = async (req, res) => {
         .json({ success: false, message: "User ID not found" });
     }
 
-    const extractedText = await extractTextFromPDF(file.path);
+    const extractedText = await extractTextFromPDF(file.buffer || file.path);
     const llmResponse = await resumeAgent(extractedText);
     const resumeParsed = JSON.parse(llmResponse);
 
@@ -39,8 +40,11 @@ export const uploadResume = async (req, res) => {
       },
     );
 
-    await redisClient.set(`resume:${userId}`, JSON.stringify(resume));
-    fs.unlinkSync(file.path);
+    await redisClient.setex(
+      `resume:${userId}`,
+      getCacheTtl(),
+      JSON.stringify(resume),
+    );
 
     return res.status(200).json({
       success: true,
@@ -49,10 +53,6 @@ export const uploadResume = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in uploadResume:", error);
-
-    if (file) {
-      fs.unlinkSync(file.path);
-    }
 
     return res.status(500).json({
       success: false,
@@ -80,7 +80,11 @@ export const getResume = async (req, res) => {
         message: "Resume not found for the user",
       });
     }
-    await redisClient.set(`resume:${userId}`, JSON.stringify(resume));
+    await redisClient.setex(
+      `resume:${userId}`,
+      getCacheTtl(),
+      JSON.stringify(resume),
+    );
 
     return res.status(200).json({
       success: true,

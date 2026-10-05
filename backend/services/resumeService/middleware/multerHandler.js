@@ -1,25 +1,6 @@
 import multer from "multer";
-import path from "path";
-import fs from "fs";
-import { fileURLToPath } from "url";
 
-const uploadPath = path.resolve(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "../uploads",
-);
-if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath, { recursive: true });
-}
-
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadPath);
-  },
-  filename: (_req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, `${uniqueSuffix}.pdf`);
-  },
-});
+const storage = multer.memoryStorage();
 
 const isPdfFile = (file) => file?.mimetype === "application/pdf";
 
