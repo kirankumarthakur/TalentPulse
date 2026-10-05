@@ -82,7 +82,7 @@ Make sure you have the following installed and set up before running locally:
 ## Environment Variables
 
 ### Redis (Shared Cache & Session Store)
-Shared across `gateway`, `authService`, `resumeService`, and `interviewService` via `backend/caching/redis/redisCaching.js`:
+Shared across services via their local `configs/redisConfig.js`:
 ```env
 REDIS_HOST="your-redis-host"
 REDIS_PORT=6379

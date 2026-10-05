@@ -1,4 +1,4 @@
-import redisClient from "../../../caching/redis/redisCaching.js";
+import redisClient from "../configs/redisConfig.js";
 import { resumeAgent } from "../agents/resume.agent.js";
 import extractTextFromPDF from "../configs/pdfConfig.js";
 import Resume from "../models/resume.model.js";

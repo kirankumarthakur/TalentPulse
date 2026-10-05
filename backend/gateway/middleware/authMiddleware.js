@@ -1,4 +1,4 @@
-import redisClient from "../../caching/redis/redisCaching.js";
+import redisClient from "../configs/redisConfig.js";
 
 export const authMiddleware = async (req, res, next) => {
   try {

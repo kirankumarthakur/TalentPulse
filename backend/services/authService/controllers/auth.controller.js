@@ -1,7 +1,7 @@
 import { app } from "../configs/firebaseConfig.js";
 import { getAuth } from "firebase-admin/auth";
 import User from "../models/auth.model.js";
-import redisClient from "../../../caching/redis/redisCaching.js";
+import redisClient from "../configs/redisConfig.js";
 
 export const GoogleAuthController = async (req, res) => {
   try {

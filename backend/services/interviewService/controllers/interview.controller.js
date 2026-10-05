@@ -1,4 +1,4 @@
-import redisClient from "../../../caching/redis/redisCaching.js";
+import redisClient from "../configs/redisConfig.js";
 import graph from "../graph/graph.js";
 import Interview from "../models/interview.model.js";
 
