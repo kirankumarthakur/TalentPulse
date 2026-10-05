@@ -13,4 +13,4 @@ app.use(express.json());
 app.use("/", billingRouter);
 app.use("/api/billing", billingRouter);
 
-module.exports = app;
+export default app;

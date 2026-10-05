@@ -39,4 +39,4 @@ app.use(
 );
 app.get("/api/me", authMiddleware, getCurrentUser);
 
-module.exports = app;
+export default app;

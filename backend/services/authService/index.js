@@ -15,4 +15,4 @@ app.use(cookieParser());
 
 app.use("/", authRouter);
 
-module.exports = app;
+export default app;
