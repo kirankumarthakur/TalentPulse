@@ -71,7 +71,7 @@ Make sure you have the following installed and set up before running locally:
 * **Node.js** (v18.0 or higher)
 * **npm** (or yarn / pnpm)
 * **MongoDB Atlas** cluster (or local MongoDB)
-* **Redis** server (local or a managed instance like Upstash)
+* **Redis** server (local or a managed instance like Upstash, Aiven, or Redis Cloud)
 * Accounts / credentials for:
   * **Groq Cloud** (API key)
   * **Firebase Console** (Web App config + Service Account credentials)
@@ -81,7 +81,14 @@ Make sure you have the following installed and set up before running locally:
 
 ## Environment Variables
 
-Each service uses its own environment configuration.
+### Redis (Shared Cache & Session Store)
+Shared across `gateway`, `authService`, `resumeService`, and `interviewService` via `backend/caching/redis/redisCaching.js`:
+```env
+REDIS_HOST="your-redis-host"
+REDIS_PORT=6379
+REDIS_USERNAME="default"
+REDIS_PASSWORD="your-redis-password"
+```
 
 ### Frontend (`frontend/.env`)
 ```env
@@ -98,14 +105,12 @@ URL_RESUME="http://localhost:7777"
 URL_INTERVIEW="http://localhost:6666"
 URL_BILLING="http://localhost:5555"
 URL_FRONTEND="http://localhost:5173"
-URL_REDIS="redis://localhost:6379"
 ```
 
 ### Auth Service (`backend/services/authService/.env`)
 ```env
 PORT=8888
 AUTH_MONGODB_URI="mongodb+srv://.../auth"
-REDIS_HOST="redis://localhost:6379"
 FIREBASE_PROJECT_ID="your-project-id"
 FIREBASE_CLIENT_EMAIL="your-service-account-email"
 FIREBASE_PRIVATE_KEY="your-firebase-private-key"
@@ -115,7 +120,6 @@ FIREBASE_PRIVATE_KEY="your-firebase-private-key"
 ```env
 PORT=7777
 RESUME_MONGODB_URI="mongodb+srv://.../resume"
-REDIS_HOST="redis://localhost:6379"
 RESUME_GROQ_API_KEY="your-groq-api-key"
 ```
 
@@ -123,7 +127,6 @@ RESUME_GROQ_API_KEY="your-groq-api-key"
 ```env
 PORT=6666
 INTERVIEW_MONGODB_URI="mongodb+srv://.../interview"
-REDIS_HOST="redis://localhost:6379"
 INTERVIEW_GROQ_API_KEY="your-groq-api-key"
 ```
 
@@ -163,7 +166,7 @@ cd backend/services/billingService && npm install && cd ../../..
 ```
 
 ### 3. Start Redis
-Make sure your Redis server is running locally on port `6379`, or configure the remote connection string in your `.env` files.
+Make sure your Redis server is running locally on port `6379`, or configure the remote connection credentials (`REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD`) in your environment.
 
 ### 4. Start the backend services
 Run each service in a separate terminal:
@@ -204,4 +207,10 @@ The repository includes a configured [`vercel.json`](./vercel.json) that defines
 * `gateway`, `authservice`, `resumeservice`, `interviewservice`, and `billingservice` are built as individual Express services.
 * Incoming requests to `/api/*` route to `gateway`, while all other paths route to `frontend`.
 * Service URLs (`URL_AUTH`, `URL_RESUME`, `URL_INTERVIEW`, `URL_BILLING`) are automatically bound by Vercel.
-* Add your project-wide environment variables (`AUTH_MONGODB_URI`, `RESUME_MONGODB_URI`, `FIREBASE_PRIVATE_KEY`, `RAZORPAY_KEY_SECRET`, etc.) in your Vercel Project Settings.
+* Add your project-wide environment variables in your Vercel Project Settings:
+  * **Databases**: `AUTH_MONGODB_URI`, `RESUME_MONGODB_URI`, `INTERVIEW_MONGODB_URI`, `BILLING_MONGODB_URI`
+  * **Redis**: `REDIS_HOST`, `REDIS_PORT`, `REDIS_USERNAME`, `REDIS_PASSWORD`
+  * **AI Models**: `RESUME_GROQ_API_KEY`, `INTERVIEW_GROQ_API_KEY`
+  * **Firebase**: `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`
+  * **Payments**: `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`
+  * **App URL**: `URL_FRONTEND`
